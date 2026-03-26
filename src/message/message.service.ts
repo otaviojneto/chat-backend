@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ChatGateway } from 'src/chat/chat.gateway';
 
 @Injectable()
 export class MessageService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private chatGateway: ChatGateway,
+  ) {}
 
-  create(content: string, userId: string, roomId: string) {
-    return this.prisma.message.create({
+  async create(content: string, userId: string, roomId: string) {
+    const message = await this.prisma.message.create({
       data: {
         content,
         userId,
@@ -17,7 +21,11 @@ export class MessageService {
         room: true,
       },
     });
+
+    this.chatGateway.sendMessage(message.content);
+    return message;
   }
+
   findAll(roomId: string) {
     return this.prisma.message.findMany({
       where: {
