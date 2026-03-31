@@ -10,4 +10,8 @@ export class RoomService {
       data: { name },
     });
   }
+
+  findAll() {
+    return this.prisma.room.findMany();
+  }
 }

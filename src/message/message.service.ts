@@ -22,7 +22,7 @@ export class MessageService {
       },
     });
 
-    this.chatGateway.sendMessage(message.content);
+    this.chatGateway.sendMessage(message);
     return message;
   }
 
