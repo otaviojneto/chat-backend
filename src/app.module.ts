@@ -8,9 +8,16 @@ import { MessageController } from './message/message.controller';
 import { MessageService } from './message/message.service';
 import { MessageModule } from './message/message.module';
 import { ChatGateway } from './chat/chat.gateway';
+import { ConfigUserModule } from './config-user/config-user.module';
 
 @Module({
-  imports: [PrismaModule, UserModule, RoomModule, MessageModule],
+  imports: [
+    PrismaModule,
+    UserModule,
+    RoomModule,
+    MessageModule,
+    ConfigUserModule,
+  ],
   controllers: [AppController, MessageController],
   providers: [AppService, MessageService, ChatGateway],
 })
