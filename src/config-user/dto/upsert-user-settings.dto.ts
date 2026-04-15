@@ -1,5 +1,5 @@
-export type UpsertUserSettingsDto = {
-  userId: string;
+/** Campos enviados no PATCH (sem `userId`: vem do JWT). */
+export type UpsertUserSettingsBody = {
   /** Atualiza `User.name` quando enviado. */
   name?: string;
   email?: string;

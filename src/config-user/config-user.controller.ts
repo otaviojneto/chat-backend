@@ -1,21 +1,29 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import {
   ConfigUserService,
   type UserSettingsWithName,
 } from './config-user.service';
-import type { UpsertUserSettingsDto } from './dto/upsert-user-settings.dto';
+import type { UpsertUserSettingsBody } from './dto/upsert-user-settings.dto';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import type { AuthUserPayload } from 'src/auth/decorators/current-user.decorator';
 
 @Controller('config-user')
 export class ConfigUserController {
   constructor(private configUserService: ConfigUserService) {}
 
   @Patch()
-  upsert(@Body() body: UpsertUserSettingsDto): Promise<UserSettingsWithName> {
-    return this.configUserService.upsert(body);
+  @UseGuards(AuthGuard('jwt'))
+  upsert(
+    @CurrentUser() user: AuthUserPayload,
+    @Body() body: UpsertUserSettingsBody,
+  ): Promise<UserSettingsWithName> {
+    return this.configUserService.upsert(user.userId, body);
   }
 
-  @Get(':id')
-  get(@Param('id') id: string): Promise<UserSettingsWithName> {
-    return this.configUserService.get(id);
+  @Get('me')
+  @UseGuards(AuthGuard('jwt'))
+  getMe(@CurrentUser() user: AuthUserPayload): Promise<UserSettingsWithName> {
+    return this.configUserService.get(user.userId);
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import type { UpsertUserSettingsDto } from './dto/upsert-user-settings.dto';
+import type { UpsertUserSettingsBody } from './dto/upsert-user-settings.dto';
 
 /**
  * Preferências (`UserSettings`) mais o nome em `User`.
@@ -28,21 +28,24 @@ export type UserSettingsWithName = {
 export class ConfigUserService {
   constructor(private prisma: PrismaService) {}
 
-  async upsert(body: UpsertUserSettingsDto): Promise<UserSettingsWithName> {
+  async upsert(
+    userId: string,
+    body: UpsertUserSettingsBody,
+  ): Promise<UserSettingsWithName> {
     // Garante que o usuário existe antes de gravar `userId` em UserSettings.
     // Esse `userId` é uma chave estrangeira (FK): referência obrigatória ao `User.id` no banco.
     // Se o id não existir, o PostgreSQL rejeitaria o insert; aqui devolvemos 404 com mensagem clara.
     const user = await this.prisma.user.findUnique({
-      where: { id: body.userId },
+      where: { id: userId },
     });
     if (!user) {
-      throw new NotFoundException(`User ${body.userId} not found`);
+      throw new NotFoundException(`User ${userId} not found`);
     }
 
     let name = user.name;
     if (body.name !== undefined) {
       const updated = await this.prisma.user.update({
-        where: { id: body.userId },
+        where: { id: userId },
         data: { name: body.name },
       });
       name = updated.name;
@@ -50,9 +53,9 @@ export class ConfigUserService {
 
     // `create` = primeira vez; `update` = já havia registro para esse userId.
     const settings = await this.prisma.upsertUserSettings({
-      where: { userId: body.userId },
+      where: { userId },
       create: {
-        userId: body.userId,
+        userId,
         email: body.email,
         avatarUrl: body.uploadAvatar,
         colorTheme: body.colorTheme,

@@ -9,10 +9,12 @@ import { MessageService } from './message/message.service';
 import { MessageModule } from './message/message.module';
 import { ChatGateway } from './chat/chat.gateway';
 import { ConfigUserModule } from './config-user/config-user.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     PrismaModule,
+    AuthModule,
     UserModule,
     RoomModule,
     MessageModule,
