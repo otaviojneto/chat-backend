@@ -1,5 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { Room } from '@prisma/client';
+import type { AuthUserPayload } from 'src/auth/decorators/current-user.decorator';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { RoomService } from './room.service';
 
 @Controller('room')
@@ -19,5 +30,29 @@ export class RoomController {
   @Delete(':id')
   remove(@Param('id') id: string): Promise<Room> {
     return this.roomService.remove(id);
+  }
+
+  @Post('direct')
+  @UseGuards(AuthGuard('jwt'))
+  createDirect(
+    @CurrentUser() user: AuthUserPayload,
+    @Body() body: { targetUserId: string },
+  ) {
+    return this.roomService.createDirect(user.userId, body.targetUserId);
+  }
+
+  @Post('group')
+  @UseGuards(AuthGuard('jwt'))
+  createGroup(
+    @CurrentUser() user: AuthUserPayload,
+    @Body() body: { name: string; memberIds: string[] },
+  ) {
+    return this.roomService.createGroup(user.userId, body.name, body.memberIds);
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuard('jwt'))
+  findMyRooms(@CurrentUser() user: AuthUserPayload) {
+    return this.roomService.findMyRooms(user.userId);
   }
 }

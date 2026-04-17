@@ -18,7 +18,11 @@ export class MessageController {
   }
 
   @Get(':roomId')
-  findAll(@Param('roomId') roomId: string) {
-    return this.messageService.findAll(roomId);
+  @UseGuards(AuthGuard('jwt'))
+  findAll(
+    @CurrentUser() user: AuthUserPayload,
+    @Param('roomId') roomId: string,
+  ) {
+    return this.messageService.findAll(user.userId, roomId);
   }
 }
