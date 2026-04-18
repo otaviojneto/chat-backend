@@ -33,12 +33,6 @@ export class RoomService {
       throw new BadRequestException('targetUserId is required');
     }
 
-    if (currentUserId === targetUserId) {
-      throw new BadRequestException(
-        'You cannot create a direct conversation with yourself',
-      );
-    }
-
     const directName = `direct:${[currentUserId, targetUserId].sort().join(':')}`;
 
     return this.prisma.$transaction(async (tx) => {
@@ -64,16 +58,21 @@ export class RoomService {
         return existingDirect;
       }
 
+      const memberRows =
+        currentUserId === targetUserId
+          ? [{ userId: currentUserId, role: 'OWNER' as const }]
+          : [
+              { userId: currentUserId, role: 'OWNER' as const },
+              { userId: targetUserId, role: 'MEMBER' as const },
+            ];
+
       return tx.room.create({
         data: {
           name: directName,
           type: 'DIRECT',
           members: {
             createMany: {
-              data: [
-                { userId: currentUserId, role: 'OWNER' },
-                { userId: targetUserId, role: 'MEMBER' },
-              ],
+              data: memberRows,
             },
           },
         },
