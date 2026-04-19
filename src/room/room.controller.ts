@@ -36,9 +36,13 @@ export class RoomController {
   @UseGuards(AuthGuard('jwt'))
   createDirect(
     @CurrentUser() user: AuthUserPayload,
-    @Body() body: { targetUserId: string },
+    @Body() body: { targetUserId: string; name?: string },
   ) {
-    return this.roomService.createDirect(user.userId, body.targetUserId);
+    return this.roomService.createDirect(
+      user.userId,
+      body.targetUserId,
+      body.name,
+    );
   }
 
   @Post('group')

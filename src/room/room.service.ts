@@ -28,12 +28,27 @@ export class RoomService {
     });
   }
 
-  createDirect(currentUserId: string, targetUserId: string) {
+  async createDirect(
+    currentUserId: string,
+    targetUserId: string,
+    nameOverride?: string,
+  ) {
     if (!targetUserId) {
       throw new BadRequestException('targetUserId is required');
     }
 
-    const directName = `direct:${[currentUserId, targetUserId].sort().join(':')}`;
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+    });
+    if (!target) {
+      throw new NotFoundException('Target user not found');
+    }
+
+    const directKey = `direct:${[currentUserId, targetUserId].sort().join(':')}`;
+    const roomName =
+      nameOverride?.trim() ||
+      target.name.trim() ||
+      (currentUserId === targetUserId ? 'You' : directKey);
 
     return this.prisma.$transaction(async (tx) => {
       const existingDirect = await tx.room.findFirst({
@@ -55,6 +70,17 @@ export class RoomService {
       });
 
       if (existingDirect) {
+        const shouldFixLegacyName =
+          roomName &&
+          existingDirect.name.startsWith('direct:') &&
+          existingDirect.name !== roomName;
+        if (shouldFixLegacyName) {
+          return tx.room.update({
+            where: { id: existingDirect.id },
+            data: { name: roomName },
+            include: { members: true },
+          });
+        }
         return existingDirect;
       }
 
@@ -68,7 +94,7 @@ export class RoomService {
 
       return tx.room.create({
         data: {
-          name: directName,
+          name: roomName,
           type: 'DIRECT',
           members: {
             createMany: {
